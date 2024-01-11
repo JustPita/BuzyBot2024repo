@@ -27,7 +27,6 @@ my_client = mqtt.Client(NOM)
 
 
 
-
 ### Fonctions de gestion de l'interface MQTT
 def on_connect_cb(client, userdata, flags, return_code):
     """
