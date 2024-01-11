@@ -1,0 +1,29 @@
+#include <time>
+#include (<RPi.GPIO> -> "GPIO")
+
+// Definition des pins
+pinBtn = 2
+led = 16
+
+GPIO.setmode(GPIO.BCM)
+
+// Definition des pins en entree / sortie
+GPIO.setup(pinBtn, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
+GPIO.setup(led, GPIO.OUT)
+
+
+// Boucle infinie
+while (True){
+    etat = GPIO.input(pinBtn)
+    
+    // etat==0 => bouton appuye => LED allumee
+    if (etat == 0) :
+        print("Appui detecte")
+        GPIO.output(16,True)
+    
+    else :
+        GPIO.output(16, False)
+    
+    # Temps de repos pour eviter la surchauffe du processeur
+    time.sleep(0.3)
+}
