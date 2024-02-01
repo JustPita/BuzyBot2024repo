@@ -151,11 +151,14 @@
             document.getElementById('prenom').value = prenom;
             document.getElementById('tel').value = tel;
             document.getElementById('mail').value = mail;
+            var confirmation = confirm("Voulez-vous vraiment modifier cet utilisateur ?");
+            if (confirmation) {
+                window.location.href = "user.php?updateUser=" + userId;
+            }
         }
 
         function confirmDelete(userId, nom, prenom, tel, mail) {
-            fillEditForm(userId, nom, prenom, tel, mail);
-            var confirmation = confirm("Voulez-vous vraiment supprimer ou modifier cet utilisateur ?");
+            var confirmation = confirm("Voulez-vous vraiment supprimer cet utilisateur ?");
             if (confirmation) {
                 window.location.href = "user.php?deleteUser=" + userId;
             }
