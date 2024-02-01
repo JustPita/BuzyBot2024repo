@@ -5,7 +5,7 @@ import MySQLdb
 
 def execute_sql_command(command):
     connection = MySQLdb.connect(
-        host="localhost",
+        host="SSP",
         user="ServiceAccount",
         passwd="S€rv!ce4ccount",
         db="DBBUSYBOT"
