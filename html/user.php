@@ -131,9 +131,9 @@
         
         <?php
             if(isset($_POST["updateUser"])) {
-                echo '<button type="submit" name="updateUser" class="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-700 focus:outline-none focus:shadow-outline-yellow active:bg-yellow-800 transition duration-150 ease-in-out w-full">Modifier utilisateur</button>';
+                echo '<button id="updateUserBtn" type="submit" name="updateUser" class="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-700 focus:outline-none focus:shadow-outline-yellow active:bg-yellow-800 transition duration-150 ease-in-out w-full">Modifier utilisateur</button>';
             } else {
-                echo '<button type="submit" name="addUser" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:shadow-outline-blue active:bg-blue-800 transition duration-150 ease-in-out w-full">Ajouter utilisateur</button>';
+                echo '<button id="updateUserBtn" type="submit" name="addUser" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:shadow-outline-blue active:bg-blue-800 transition duration-150 ease-in-out w-full">Ajouter utilisateur</button>';
             }
         ?>
     </form>
@@ -146,23 +146,36 @@
 
 <script>
     function fillEditForm(userId, nom, prenom, tel, mail) {
-            document.getElementById('iduser').value = userId;
-            document.getElementById('nom').value = nom;
-            document.getElementById('prenom').value = prenom;
-            document.getElementById('tel').value = tel;
-            document.getElementById('mail').value = mail;
-            var confirmation = confirm("Voulez-vous vraiment modifier cet utilisateur ?");
-            if (confirmation) {
-                window.location.href = "user.php?updateUser=" + userId;
-            }
-        }
+        document.getElementById('iduser').value = userId;
+        document.getElementById('nom').value = nom;
+        document.getElementById('prenom').value = prenom;
+        document.getElementById('tel').value = tel;
+        document.getElementById('mail').value = mail;
 
-        function confirmDelete(userId, nom, prenom, tel, mail) {
-            var confirmation = confirm("Voulez-vous vraiment supprimer cet utilisateur ?");
-            if (confirmation) {
-                window.location.href = "user.php?deleteUser=" + userId;
-            }
+        var updateUserBtn = document.getElementById('updateUserBtn');
+        updateUserBtn.innerText = 'Modifier utilisateur';
+        updateUserBtn.setAttribute('name', 'updateUser');
+    }
+
+    function confirmDelete(userId, nom, prenom, tel, mail) {
+        var confirmation = confirm("Voulez-vous vraiment supprimer cet utilisateur ?");
+        if (confirmation) {
+            window.location.href = "user.php?deleteUser=" + userId;
         }
+    }
+
+    function resetForm() {
+        document.getElementById('iduser').value = '';
+        document.getElementById('nom').value = '';
+        document.getElementById('prenom').value = '';
+        document.getElementById('tel').value = '';
+        document.getElementById('mail').value = '';
+
+        var updateUserBtn = document.getElementById('updateUserBtn');
+        updateUserBtn.innerText = 'Ajouter utilisateur';
+        updateUserBtn.setAttribute('name', 'addUser');
+    }
+
     var menuBtn = document.getElementById('menuBtn');
     var menuDropdown = document.getElementById('menuDropdown');
 
