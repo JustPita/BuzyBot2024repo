@@ -75,11 +75,25 @@
                 }
             }
 
+            if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["updateLocal"])) {
+                $idlocal = filter_var($_POST["idlocal"], FILTER_VALIDATE_INT);
+                $iplocal = filter_var($_POST["iplocal"], FILTER_VALIDATE_IP);
+                $adresse = filter_var($_POST["adresse"], FILTER_SANITIZE_STRING);
+            
+                $updateSql = "UPDATE local SET iplocal='$iplocal', adresse='$adresse' WHERE idlocal=$idlocal";
+            
+                if ($conn->query($updateSql) === TRUE) {
+                    echo "<p class='text-green-500'>Local mis à jour avec succès.</p>";
+                } else {
+                    echo "<p class='text-red-500'>Erreur lors de la mise à jour du local : " . $conn->error . "</p>";
+                }
+            }
+
             $result = $conn->query("SELECT * FROM local");
 
             echo "<ul>";
             while ($row = $result->fetch_assoc()) {
-                echo "<li>" . $row['iplocal'] . " - " . $row['adresse']  ."  " .  " <a href='javascript:void(0)' class='text-red-500 ml-2' onclick='confirmDelete(" . $row['idlocal'] . ")'>Supprimer</a></li>";
+                echo "<li>" . $row['iplocal'] . " - " . $row['adresse']  ."  " .  " <a href='javascript:void(0)' class='text-red-500 ml-2' onclick='fillEditForm(" . $row['idlocal'] . ", \"" . $row['iplocal'] . "\", \"" . $row['adresse'] . "\")'>Modifier</a> <a href='javascript:void(0)' class='text-red-500 ml-2' onclick='confirmDelete(" . $row['idlocal'] . ", \"" . $row['iplocal'] . "\", \"" . $row['adresse'] . "\")'>Supprimer</a></li>";
             }
             echo "</ul>";
 
@@ -88,7 +102,7 @@
 
         <form action="" method="post" class="flex flex-col items-center mt-4">
             <label for="idlocal" class="mb-2">ID Local:</label>
-             <input type="number" id="idlocal" name="idlocal" required class="px-3 py-2 border border-gray-300 rounded-md mb-4 w-full" min="0">
+            <input type="number" id="idlocal" name="idlocal" required class="px-3 py-2 border border-gray-300 rounded-md mb-4 w-full" min="0">
 
             <label for="iplocal" class="mb-2">Adresse IP Local:</label>
             <input type="text" minlength="7" maxlength="15" size="15" pattern="^((\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.){3}(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$" id="iplocal" name="iplocal" required class="px-3 py-2 border border-gray-300 rounded-md mb-4 w-full">
@@ -96,8 +110,14 @@
             <label for="adresse" class="mb-2">Adresse:</label>
             <textarea id="adresse" name="adresse" rows="4" required class="px-3 py-2 border border-grey-300 rounded-md mb-4 w-full"></textarea>
 
-            <button type="submit" name="addLocal" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:shadow-outline-blue active:bg-blue-800 transition duration-150 ease-in-out w-full  mb-8">Ajouter Local</button>
-            </form>
+            <?php
+                if(isset($_POST["updateLocal"])) {
+                    echo '<button id="updatelocalBtn" type="submit" name="updateLocal" class="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-700 focus:outline-none focus:shadow-outline-yellow active:bg-yellow-800 transition duration-150 ease-in-out w-full">Modifier local</button>';
+                } else {
+                    echo '<button id="updatelocalBtn" type="submit" name="addLocal" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:shadow-outline-blue active:bg-blue-800 transition duration-150 ease-in-out w-full">Ajouter Local</button>';
+                }
+            ?>
+        </form>
     </main>
 
     <footer class="bg-gray-800 text-white text-center py-4 fixed bottom-0 w-full">
@@ -105,12 +125,39 @@
     </footer>
 
     <script>
-        function confirmDelete(localId) {
-            var confirmation = confirm("Voulez-vous vraiment supprimer ce local ?");
-            if (confirmation) {
-                window.location.href = "local.php?deleteLocal=" + localId;
+        function resetUpdateButton() {
+            var updatelocalBtn = document.getElementById('updatelocalBtn');
+            if (updatelocalBtn) {
+                updatelocalBtn.innerHTML = 'Ajouter Local';
+                updatelocalBtn.setAttribute('name', 'addLocal');
+                updatelocalBtn.classList.remove('bg-yellow-500');
+                updatelocalBtn.classList.add('bg-blue-500');
             }
         }
+
+        function fillEditForm(idlocal, iplocal, adresse) {
+            document.getElementById('idlocal').value = idlocal;
+            document.getElementById('iplocal').value = iplocal;
+            document.getElementById('adresse').value = adresse;
+
+            var updatelocalBtn = document.getElementById('updatelocalBtn');
+            if (updatelocalBtn) {
+                updatelocalBtn.innerHTML = 'Modifier local';
+                updatelocalBtn.setAttribute('name', 'updateLocal');
+                updatelocalBtn.classList.remove('bg-blue-500');
+                updatelocalBtn.classList.add('bg-yellow-500');
+            }
+        }
+
+        function confirmDelete(idlocal, iplocal, adresse) {
+            var confirmation = confirm("Voulez-vous vraiment supprimer ce Local ?");
+            if (confirmation) {
+                window.location.href = "local.php?deleteLocal=" + idlocal;
+                resetUpdateButton();
+            }
+        }
+
+        window.onload = resetUpdateButton;
 
         var menuBtn = document.getElementById('menuBtn');
         var menuDropdown = document.getElementById('menuDropdown');
@@ -128,6 +175,7 @@
         menuBtn.addEventListener('mouseenter', showMenu);
         menuBtn.addEventListener('mouseleave', hideMenu);
         menuDropdown.addEventListener('mouseenter', showMenu);
+
     </script>
 
 </body>

@@ -130,12 +130,12 @@
         <input type="text" id="mail" name="mail" required class="px-3 py-2 border border-gray-300 rounded-md mb-4 w-full">
         
         <?php
-            if(isset($_POST["updateUser"])) {
-                echo '<button id="updateUserBtn" type="submit" name="updateUser" class="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-700 focus:outline-none focus:shadow-outline-yellow active:bg-yellow-800 transition duration-150 ease-in-out w-full">Modifier utilisateur</button>';
-            } else {
-                echo '<button id="updateUserBtn" type="submit" name="addUser" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:shadow-outline-blue active:bg-blue-800 transition duration-150 ease-in-out w-full">Ajouter utilisateur</button>';
-            }
-        ?>
+    if(isset($_POST["updateUser"])) {
+        echo '<button id="updateUserBtn" type="submit" name="updateUser" class="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-700 focus:outline-none focus:shadow-outline-yellow active:bg-yellow-800 transition duration-150 ease-in-out w-full">Modifier utilisateur</button>';
+    } else {
+        echo '<button id="updateUserBtn" type="submit" name="addUser" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:shadow-outline-blue active:bg-blue-800 transition duration-150 ease-in-out w-full">Ajouter utilisateur</button>';
+    }
+?>
     </form>
 
 </main>
@@ -145,6 +145,16 @@
 </footer>
 
 <script>
+    function resetUpdateButton() {
+        var updateUserBtn = document.getElementById('updateUserBtn');
+        if (updateUserBtn) {
+        updateUserBtn.innerHTML = 'Ajouter utilisateur';
+        updateUserBtn.setAttribute('name', 'addUser');
+        updateUserBtn.classList.remove('bg-yellow-500');
+        updateUserBtn.classList.add('bg-blue-500');
+        }
+    }
+
     function fillEditForm(userId, nom, prenom, tel, mail) {
         document.getElementById('iduser').value = userId;
         document.getElementById('nom').value = nom;
@@ -153,43 +163,41 @@
         document.getElementById('mail').value = mail;
 
         var updateUserBtn = document.getElementById('updateUserBtn');
-        updateUserBtn.innerText = 'Modifier utilisateur';
-        updateUserBtn.setAttribute('name', 'updateUser');
-    }
-
-    function confirmDelete(userId, nom, prenom, tel, mail) {
-        var confirmation = confirm("Voulez-vous vraiment supprimer cet utilisateur ?");
-        if (confirmation) {
-            window.location.href = "user.php?deleteUser=" + userId;
+        if (updateUserBtn) {
+            updateUserBtn.innerHTML = 'Modifier utilisateur';
+            updateUserBtn.setAttribute('name', 'updateUser');
+            updateUserBtn.classList.remove('bg-blue-500');
+            updateUserBtn.classList.add('bg-yellow-500');
         }
     }
 
-    function resetForm() {
-        document.getElementById('iduser').value = '';
-        document.getElementById('nom').value = '';
-        document.getElementById('prenom').value = '';
-        document.getElementById('tel').value = '';
-        document.getElementById('mail').value = '';
-
-        var updateUserBtn = document.getElementById('updateUserBtn');
-        updateUserBtn.innerText = 'Ajouter utilisateur';
-        updateUserBtn.setAttribute('name', 'addUser');
+function confirmDelete(userId, nom, prenom, tel, mail) {
+    var confirmation = confirm("Voulez-vous vraiment supprimer cet utilisateur ?");
+    if (confirmation) {
+        window.location.href = "user.php?deleteUser=" + userId;
+        resetUpdateButton();
     }
+}
 
-    var menuBtn = document.getElementById('menuBtn');
-    var menuDropdown = document.getElementById('menuDropdown');
+window.onload = resetUpdateButton;
 
-    function showMenu() {
-        menuDropdown.classList.remove('invisible');
-        menuDropdown.classList.add('opacity-100');
-    }
-    function hideMenu() {
-        menuDropdown.classList.remove('opacity-100');
-        menuDropdown.classList.add('invisible');
-    }
-    menuBtn.addEventListener('mouseenter', showMenu);
-    menuBtn.addEventListener('mouseleave', hideMenu);
-    menuDropdown.addEventListener('mouseenter', showMenu);
+var menuBtn = document.getElementById('menuBtn');
+var menuDropdown = document.getElementById('menuDropdown');
+
+function showMenu() {
+    menuDropdown.classList.remove('invisible');
+    menuDropdown.classList.add('opacity-100');
+}
+
+function hideMenu() {
+    menuDropdown.classList.remove('opacity-100');
+    menuDropdown.classList.add('invisible');
+}
+
+menuBtn.addEventListener('mouseenter', showMenu);
+menuBtn.addEventListener('mouseleave', hideMenu);
+menuDropdown.addEventListener('mouseenter', showMenu);
+
 </script>
 
 </body>
