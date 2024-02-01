@@ -84,20 +84,36 @@
                 echo "<p class='text-red-500'>Erreur lors de la suppression des liaisons : " . $conn->error . "</p>";
             }
         }
+
+        if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["updateUser"])) {
+            $iduser = filter_var($_POST["iduser"], FILTER_VALIDATE_INT);
+            $nom = filter_var($_POST["nom"], FILTER_SANITIZE_STRING);
+            $prenom = filter_var($_POST["prenom"], FILTER_SANITIZE_STRING);
+            $tel = filter_var($_POST["tel"], FILTER_SANITIZE_STRING);
+            $mail = filter_var($_POST["mail"], FILTER_VALIDATE_EMAIL);
+        
+            $updateSql = "UPDATE user SET nom='$nom', prenom='$prenom', tel='$tel', mail='$mail' WHERE iduser=$iduser";
+        
+            if ($conn->query($updateSql) === TRUE) {
+                echo "<p class='text-green-500'>Utilisateur mis à jour avec succès.</p>";
+            } else {
+                echo "<p class='text-red-500'>Erreur lors de la mise à jour de l'utilisateur : " . $conn->error . "</p>";
+            }
+        }
         
 
         $result = $conn->query("SELECT * FROM user");
 
         echo "<ul>";
         while ($row = $result->fetch_assoc()) {
-            echo "<li>" . $row['nom'] . " " . $row['prenom'] . " <a href='javascript:void(0)' class='text-red-500 ml-2' onclick='confirmDelete(" . $row['iduser'] . ")'>Supprimer</a></li>";
+            echo "<li>" . $row['nom'] . " " . $row['prenom'] . " <a href='javascript:void(0)' class='text-red-500 ml-2' onclick='fillEditForm(" . $row['iduser'] . ", \"" . $row['nom'] . "\", \"" . $row['prenom'] . "\", \"" . $row['tel'] . "\", \"" . $row['mail'] . "\")'>Modifier</a> <a href='javascript:void(0)' class='text-red-500 ml-2' onclick='confirmDelete(" . $row['iduser'] . ", \"" . $row['nom'] . "\", \"" . $row['prenom'] . "\", \"" . $row['tel'] . "\", \"" . $row['mail'] . "\")'>Supprimer</a></li>";
         }
         echo "</ul>";
 
         $conn->close();
     ?>
 
-<form action="" method="post" class="flex flex-col items-center mt-4">
+    <form action="" method="post" class="flex flex-col items-center mt-4">
         <label for="iduser" class="mb-2">Iduser:</label>
         <input type="number" id="iduser" name="iduser" required class="px-3 py-2 border border-gray-300 rounded-md mb-4 w-full" min="0">
 
@@ -113,8 +129,15 @@
         <label for="mail" class="mb-2">E-mail:</label>
         <input type="text" id="mail" name="mail" required class="px-3 py-2 border border-gray-300 rounded-md mb-4 w-full">
         
-        <button type="submit" name="addUser" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:shadow-outline-blue active:bg-blue-800 transition duration-150 ease-in-out w-full">Ajouter utilisateur</button>
+        <?php
+            if(isset($_POST["updateUser"])) {
+                echo '<button type="submit" name="updateUser" class="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-700 focus:outline-none focus:shadow-outline-yellow active:bg-yellow-800 transition duration-150 ease-in-out w-full">Modifier utilisateur</button>';
+            } else {
+                echo '<button type="submit" name="addUser" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:shadow-outline-blue active:bg-blue-800 transition duration-150 ease-in-out w-full">Ajouter utilisateur</button>';
+            }
+        ?>
     </form>
+
 </main>
 
 <footer class="bg-gray-800 text-white text-center py-4 fixed bottom-0 w-full">
@@ -122,12 +145,21 @@
 </footer>
 
 <script>
-        function confirmDelete(userId) {
-    var confirmation = confirm("Voulez-vous vraiment supprimer cet utilisateur ?");
-    if (confirmation) {
-        window.location.href = "user.php?deleteUser=" + userId;
-    }
-}
+    function fillEditForm(userId, nom, prenom, tel, mail) {
+            document.getElementById('iduser').value = userId;
+            document.getElementById('nom').value = nom;
+            document.getElementById('prenom').value = prenom;
+            document.getElementById('tel').value = tel;
+            document.getElementById('mail').value = mail;
+        }
+
+        function confirmDelete(userId, nom, prenom, tel, mail) {
+            fillEditForm(userId, nom, prenom, tel, mail);
+            var confirmation = confirm("Voulez-vous vraiment supprimer ou modifier cet utilisateur ?");
+            if (confirmation) {
+                window.location.href = "user.php?deleteUser=" + userId;
+            }
+        }
     var menuBtn = document.getElementById('menuBtn');
     var menuDropdown = document.getElementById('menuDropdown');
 
