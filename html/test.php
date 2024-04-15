@@ -52,8 +52,56 @@
 
                 $conn->close();
                 ?>
+                
             </select>
+            <?php
 
+include 'config.php';
+
+header('Content-Type: text/event-stream');
+header('Cache-Control: no-cache');
+
+$portierId = isset($_GET['idportier']) ? intval($_GET['idportier']) : 0;
+$tri = isset($_GET['tri']) ? $_GET['tri'] : 'date_desc';
+
+$order = '';
+switch ($tri) {
+    case 'date_desc':
+        $order = 'date DESC';
+        break;
+    case 'date_asc':
+        $order = 'date ASC';
+        break;
+    case 'evenement_desc':
+        $order = 'evenement DESC';
+        break;
+    case 'evenement_asc':
+        $order = 'evenement ASC';
+        break;
+}
+
+$lastEventId = isset($_GET['lastEventId']) ? intval($_GET['lastEventId']) : 0;
+
+$sql = "SELECT * FROM event WHERE idportier = ? AND id > ? ORDER BY {$order}";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param('ii', $portierId, $lastEventId);
+
+while (true) {
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    while ($row = $result->fetch_assoc()) {
+        echo "event: newEvent\n";
+        echo "data: " . json_encode($row) . "\n\n";
+        ob_flush();
+        flush();
+    }
+
+    sleep(1); 
+}
+
+$conn->close();
+?>
             <label for="tri" class="block mb-2">Trier par :</label>
             <select name="tri" id="tri" class="border p-2 mb-4">
                 <option value="date_desc" <?php echo isset($_GET['tri']) && $_GET['tri'] === 'date_desc' ? 'selected' : ''; ?>>Date (Décroissant)</option>
@@ -65,84 +113,45 @@
             <button type="submit" class="bg-blue-500 text-white px-4 py-2">Afficher l'historique</button>
         </form>
 
-        <?php
-        if (isset($_GET['idportier'])) {
-            $portier_id = is_numeric($_GET['idportier']) ? intval($_GET['idportier']) : 0;
-            include 'config.php';
+        <div id="historique" class="mb-20"></div>
 
-            $tri = isset($_GET['tri']) ? $_GET['tri'] : 'date_desc';
+        <script>
+            const eventSource = new EventSource("historique.php");
+            const historiqueEl = document.getElementById("historique");
 
-            switch ($tri) {
-                case 'date_desc':
-                    $order = 'date DESC';
-                    break;
-                case 'date_asc':
-                    $order = 'date ASC';
-                    break;
-                case 'evenement_desc':
-                    $order = 'evenement DESC';
-                    break;
-                case 'evenement_asc':
-                    $order = 'evenement ASC';
-                    break;
-                default:
-                    $order = 'date DESC';
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                const newEventEl = document.createElement("div");
+                newEventEl.classList.add("bg-white", "border", "p-4", "mb-4");
+                newEventEl.innerHTML = `
+                    <p>Date: ${data.date}</p>
+                    <p>Evenement: ${data.evenement}</p>
+                    <p>Message: ${data.message}</p>
+                `;
+                historiqueEl.prepend(newEventEl);
+            };
+
+            function showMenu() {
+                const menuDropdown = document.getElementById("menuDropdown");
+                menuDropdown.classList.remove("invisible");
+                menuDropdown.classList.add("opacity-100");
             }
 
-            $sql = "SELECT * FROM event WHERE idportier = {$portier_id} ORDER BY {$order}";
-            $result = $conn->query($sql);
-
-            if ($result->num_rows > 0) {
-                while ($row = $result->fetch_assoc()) {
-                    echo '<div class="bg-white border p-4 mb-4">';
-                    echo '<p>Date: ' . $row['date'] . '</p>';
-                    echo '<p>Evenement: ';
-                    switch ($row['evenement']) {
-                        case 'R':
-                            echo 'REPONSE';
-                            break;
-                        case 'A':
-                            echo 'APPEL';
-                            break;
-                        case 'C':
-                            echo 'CONFIG';
-                            break;
-                        default:
-                            echo $row['evenement'];
-                            break;
-                    }
-                    echo '</p>';
-                    echo '<p>Message: ' . $row['message'] . '</p>';
-                    echo '</div>';
-                }
-            } else {
-                echo '<p class="text-gray-600">Aucun événement trouvé pour le portier sélectionné.</p>';
+            function hideMenu() {
+                const menuDropdown = document.getElementById("menuDropdown");
+                menuDropdown.classList.remove("opacity-100");
+                menuDropdown.classList.add("invisible");
             }
-            $conn->close();
-        }
-        ?>
-        
+
+            const menuBtn = document.getElementById("menuBtn");
+            menuBtn.addEventListener("mouseenter", showMenu);
+            menuBtn.addEventListener("mouseleave", hideMenu);
+        </script>
     </main>
+
     <footer class="bg-gray-800 text-white text-center py-4 fixed bottom-0 w-full">
         <p>&copy; BusyBot2024. Tous droits réservés.</p>
     </footer>
-
-    <script>
-        var menuBtn = document.getElementById('menuBtn');
-        var menuDropdown = document.getElementById('menuDropdown');
-
-        function showMenu() {
-            menuDropdown.classList.remove('invisible');
-            menuDropdown.classList.add('opacity-100');
-        }
-        function hideMenu() {
-            menuDropdown.classList.remove('opacity-100');
-            menuDropdown.classList.add('invisible');
-        }
-        menuBtn.addEventListener('mouseenter', showMenu);
-        menuBtn.addEventListener('mouseleave', hideMenu);
-        menuDropdown.addEventListener('mouseenter', showMenu);
-    </script>
 
 </body>
 

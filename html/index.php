@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,7 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="icon" type="image/png" href="image/Busybot.png">
 </head>
-
 <body class="font-sans bg-gray-100">
 
     <header class="bg-gray-800 text-white text-center py-4">
@@ -37,6 +35,49 @@
     </nav>
 
     <main class="max-w-3xl mx-auto mt-8 mb-20">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-8">
+            <?php
+                include 'config.php';
+                $sql = "SELECT idportier, NPD, (SELECT message FROM event WHERE event.idportier = portier.idportier ORDER BY date DESC LIMIT 1) AS last_message
+                FROM portier";
+                $result = $conn->query($sql);
+                $portiers = [];
+                if ($result->num_rows > 0) {
+                    while ($row = $result->fetch_assoc()) {
+                        $portiers[] = $row;
+                    }
+                }
+                $conn->close();
+            ?>
+            <?php foreach ($portiers as $portier):
+        $images = glob("/var/www/html/portierIMG/portier" . $portier['idportier'] . "*.{jpg,jpeg,png,gif}", GLOB_BRACE);
+        usort($images, function ($a, $b) {
+            return filemtime($b) - filemtime($a);
+        });
+        $photo = isset($images[0]) ? basename($images[0]) : null;
+    ?>
+    <div class="bg-white shadow-md rounded-lg p-4 flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-2">
+            <h2 class="text-lg font-semibold text-gray-800"><?php echo "Portier: " . $portier['idportier']; ?></h2>
+            <i class="fas fa-user-circle text-gray-400 text-3xl"></i>
+            <?php if ($portier['NPD'] == 1): ?>
+                <i class="fas fa-circle text-red-500 text-xl" title="Mode ne pas déranger activé"></i>
+            <?php elseif ($portier['NPD'] == 0): ?>
+                <i class="fas fa-circle text-green-500 text-xl" title="Mode ne pas déranger désactivé"></i>
+            <?php endif; ?>
+        </div>
+        <?php if ($photo): ?>
+            <a href="/portierIMG/<?php echo $photo; ?>" target="_blank">
+        <img src="/portierIMG/<?php echo $photo; ?>" alt="Photo du portier <?php echo $portier['idportier']; ?>" class="mb-2 w-full h-64 object-cover">
+    </a>
+        <?php endif; ?>
+        <div>
+            <a href="historique.php?idportier=<?php echo $portier['idportier']; ?>" class="text-blue-500 underline">Historique</a>
+            <p class="text-gray-600"><?php echo "Dernier message: " . ($portier['last_message'] ?? 'Aucun message'); ?></p>
+        </div>
+    </div>
+    <?php endforeach; ?>
+        </div>
     </main>
 
     <footer class="bg-gray-800 text-white text-center py-4 fixed bottom-0 w-full">
@@ -58,8 +99,26 @@
         menuBtn.addEventListener('mouseenter', showMenu);
         menuBtn.addEventListener('mouseleave', hideMenu);
         menuDropdown.addEventListener('mouseenter', showMenu);
+
+        async function fetchPortiers() {
+            const response = await fetch('getPortiers.php');
+            const portiers = await response.json();
+
+            const grid = document.querySelector('.grid');
+
+            portiers.forEach(portier => {
+                const box = document.createElement('div');
+                box.classList.add('bg-white', 'border', 'p-4');
+                box.innerHTML = `
+                    <p>Portier: ${portier.idportier}</p>
+                    <p>Dernier message: ${portier.last_message ?? 'Aucun message'}</p>
+                `;
+                grid.appendChild(box);
+            });
+        }
+
+        fetchPortiers();
     </script>
 
 </body>
-
 </html>

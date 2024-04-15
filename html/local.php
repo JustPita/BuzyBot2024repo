@@ -93,7 +93,7 @@
 
             echo "<ul>";
             while ($row = $result->fetch_assoc()) {
-                echo "<li>" . $row['iplocal'] . " - " . $row['adresse']  ."  " .  " <a href='javascript:void(0)' class='text-red-500 ml-2' onclick='fillEditForm(" . $row['idlocal'] . ", \"" . $row['iplocal'] . "\", \"" . $row['adresse'] . "\")'>Modifier</a> <a href='javascript:void(0)' class='text-red-500 ml-2' onclick='confirmDelete(" . $row['idlocal'] . ", \"" . $row['iplocal'] . "\", \"" . $row['adresse'] . "\")'>Supprimer</a></li>";
+                echo "<li>" . $row['iplocal'] . " - " . $row['adresse']  ."  " .  " <a href='javascript:void(0)' class='text-blue-500 ml-2' onclick='fillEditForm(" . $row['idlocal'] . ", \"" . $row['iplocal'] . "\", \"" . $row['adresse'] . "\")'>Modifier</a> <a href='javascript:void(0)' class='text-red-500 ml-2' onclick='confirmDelete(" . $row['idlocal'] . ", \"" . $row['iplocal'] . "\", \"" . $row['adresse'] . "\")'>Supprimer</a></li>";
             }
             echo "</ul>";
 

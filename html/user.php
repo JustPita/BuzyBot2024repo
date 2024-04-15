@@ -106,7 +106,7 @@
 
         echo "<ul>";
         while ($row = $result->fetch_assoc()) {
-            echo "<li>" . $row['nom'] . " " . $row['prenom'] . " <a href='javascript:void(0)' class='text-red-500 ml-2' onclick='fillEditForm(" . $row['iduser'] . ", \"" . $row['nom'] . "\", \"" . $row['prenom'] . "\", \"" . $row['tel'] . "\", \"" . $row['mail'] . "\")'>Modifier</a> <a href='javascript:void(0)' class='text-red-500 ml-2' onclick='confirmDelete(" . $row['iduser'] . ", \"" . $row['nom'] . "\", \"" . $row['prenom'] . "\", \"" . $row['tel'] . "\", \"" . $row['mail'] . "\")'>Supprimer</a></li>";
+            echo "<li>" . $row['nom'] . " " . $row['prenom'] . " <a href='javascript:void(0)' class='text-blue-500 ml-2' onclick='fillEditForm(" . $row['iduser'] . ", \"" . $row['nom'] . "\", \"" . $row['prenom'] . "\", \"" . $row['tel'] . "\", \"" . $row['mail'] . "\")'>Modifier</a> <a href='javascript:void(0)' class='text-red-500 ml-2' onclick='confirmDelete(" . $row['iduser'] . ", \"" . $row['nom'] . "\", \"" . $row['prenom'] . "\", \"" . $row['tel'] . "\", \"" . $row['mail'] . "\")'>Supprimer</a></li>";
         }
         echo "</ul>";
 

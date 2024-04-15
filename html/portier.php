@@ -126,6 +126,11 @@
             <label for="idlocal" class="mb-2">ID Local:</label>
             <select id="idlocal" name="idlocal" required class="px-3 py-2 border border-gray-300 rounded-md mb-4 w-full">
                 <?php
+                $servername = "localhost";
+                $username = "ServiceAccount";
+                $password = "S€rv!ce4ccount";
+                $dbname = "DBBUSYBOT";
+                
                 $conn = new mysqli($servername, $username, $password, $dbname);
 
                 if ($conn->connect_error) {
@@ -137,13 +142,19 @@
                     echo "<option value='" . $row['idlocal'] . "'>" . $row['adresse'] . "</option>";
                 }
                 if (isset($_POST["updatePortier"])) {
-                    $idportier = filter_input(INPUT_POST, 'idportier', FILTER_VALIDATE_INT);
+                    $idportier = $_POST["idportier"];
                     $stmt = $conn->prepare("SELECT local.idlocal, local.adresse FROM local JOIN portier ON local.idlocal = portier.idlocal WHERE portier.idportier = ?");
                     $stmt->bind_param("i", $idportier);
                     $stmt->execute();
                     $result = $stmt->get_result();
                     while ($row = $result->fetch_assoc()) {
                         echo "<option value='" . $row['idlocal'] . "'>" . $row['adresse'] . "</option>";
+                    }
+                    if ($conn->query($deletePortierSql) === TRUE) {
+                        header("Location: portier.php");
+                        exit();
+                    } else {
+                        echo "<p class='text-red-500'>Erreur lors de la suppression du portier : " . $conn->error . "</p>";
                     }
                 }
                 $conn->close();
@@ -191,6 +202,7 @@
         document.getElementById('ipportier').value = ipportier;
         document.getElementById('cam').checked = cam;
         document.getElementById('idlocal').value = idlocal;
+        window.location.href = "portier.php?updatePortier=" + portierId;
 
 
         var updatePortierBtn = document.getElementById('updatePortierBtn');
