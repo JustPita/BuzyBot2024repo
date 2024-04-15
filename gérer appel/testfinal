@@ -1,0 +1,204 @@
+from gpiozero import Button, LED
+from signal import pause
+import subprocess
+import MySQLdb
+from time import sleep
+import paho.mqtt.client as mqtt
+import threading
+import paho.mqtt.publish as publish
+import configparser
+from datetime import datetime, timedelta
+import time
+import picamera2
+import os
+
+# Paramètres de connexion à la base de données
+db_config = {
+    'host': '192.168.107.230',
+    'user': 'ServiceAccount',
+    'password': 'S€rv!ce4ccount',
+    'database': 'DBBUSYBOT'
+}
+
+# Générer une nouvelle date
+new_date = (datetime.now() + timedelta(seconds=1)).strftime('%Y-%m-%d %H:%M:%S')
+
+# Configuration MQTT
+broker_address = "192.168.107.230"
+username = "portier"
+password = "portier"
+port = 1883
+topic = "APPEL"
+topic_reponse = "REPONSE"
+
+# Variable globale pour le mode "Ne pas déranger"
+do_not_disturb_mode = False
+
+# Fonction de rappel pour les messages entrants
+def on_message(client, userdata, message):
+    global do_not_disturb_mode
+    payload = str(message.payload.decode("utf-8"))
+    print('############ DRING ############')
+    print("message received ", payload)
+    print("message topic=", message.topic)
+    print("message qos=", message.qos)
+    print("message retain flag=", message.retain)
+
+    # Contrôler les LED en fonction du message reçu
+    if payload == "ROUGE":
+        allumer_led(led_rouge)
+        eteindre_apres_delai(led_rouge, 5)  # Éteindre après 5 secondes
+        insert_into_db('A', 'ROUGE')
+    elif payload == "ORANGE":
+        allumer_led(led_orange)
+        eteindre_apres_delai(led_orange, 5)  # Éteindre après 5 secondes
+        insert_into_db('A', 'ORANGE')
+    elif payload == "VERT":
+        allumer_led(led_vert)
+        eteindre_apres_delai(led_vert, 5)  # Éteindre après 5 secondes
+        insert_into_db('A', 'VERT')
+    elif payload == "ABSENT":
+        do_not_disturb_mode = True
+
+    print('############ DRING ############')
+
+# Instanciation de l'objet client MQTT
+client = mqtt.Client()
+client.on_message = on_message
+client.username_pw_set(username, password)
+client.connect(broker_address)
+client.subscribe(topic_reponse)
+
+# Configuration des broches GPIO
+bouton_pin = 14
+
+# Configuration des broches GPIO pour les LEDs
+PIN_LED_ROUGE = 21
+PIN_LED_ORANGE = 20
+PIN_LED_VERT = 16
+
+# Initialisation des objets Button et LED
+button_14 = Button(bouton_pin)
+
+led_rouge = LED(PIN_LED_ROUGE)
+led_orange = LED(PIN_LED_ORANGE)
+led_vert = LED(PIN_LED_VERT)
+
+def allumer_led(led):
+    # Éteindre toutes les LED
+    led_rouge.off()
+    led_orange.off()
+    led_vert.off()
+
+    # Allumer la LED spécifiée
+    led.on()
+
+def eteindre_apres_delai(led, delai):
+    sleep(delai)
+    led.off()
+
+def on_button_press():
+    global do_not_disturb_mode
+    print("Bouton 14 pressé")
+
+    if do_not_disturb_mode:
+        print("Mode 'Ne pas déranger' activé, aucun appel ne sera envoyé.")
+        return
+    else:
+        # Allumer les trois LED
+        led_rouge.on()
+        led_orange.on()
+        led_vert.on()
+
+        sleep(0.1)  # Attente pour éviter les rebonds du bouton
+        # Éteindre les trois LED
+        led_rouge.off()
+        led_orange.off()
+        led_vert.off()
+
+        # Capture de l'image et sauvegarde en tant que test.jpg
+        camera = picamera2.Picamera2()
+        camera.start_preview()
+        sleep(2)  # Délai de chauffe de la caméra
+        camera_config = camera.create_still_configuration(main={"size": (1920, 1080)}, lores={"size": (640, 480)})
+        camera.configure(camera_config)
+        camera.start()
+        nom_fichier = f"portier1_photo_{time.strftime('%Y%m%d%H%M%S')}.jpg"
+        camera.capture_file(nom_fichier)
+        camera.stop()
+        camera.stop_preview()
+
+        # Envoyer un message sur le topic d'appel
+        message = "c'est moi"
+        client.publish(topic, message)
+        insert_into_db('A', 'APPEL')
+
+        # Envoi du fichier via SCP
+        serveur_ip = "192.168.107.230"
+        username = "root"
+        commande = f"scp {nom_fichier} {username}@SSP:/var/www/html/portierIMG/"
+        resultat = subprocess.run(commande, shell=True, capture_output=True, text=True)
+
+        # Affichage du résultat de la commande SCP
+        if resultat.returncode == 0:
+            print("L'image a été transférée avec succès.")
+        else:
+            print("Erreur lors du transfert de l'image:", resultat.stderr)
+
+        # Supprimer le fichier local après l'envoi
+        os.remove(nom_fichier)
+
+        sleep(0.1)  # Attente pour éviter les rebonds du bouton
+
+def on_button_release():
+    print("Bouton 14 relâché")
+
+    # Éteindre les trois LED
+    led_rouge.off()
+    led_orange.off()
+    led_vert.off()
+
+def insert_into_db(evenement, message):
+    # Générer une nouvelle date
+    new_date = (datetime.now() + timedelta(seconds=1)).strftime('%Y-%m-%d %H:%M:%S')
+
+    # Connexion à la base de données et exécution de la requête
+    try:
+        # Établir la connexion
+        conn = MySQLdb.connect(**db_config)
+
+        # Créer un objet curseur pour exécuter des requêtes
+        cursor = conn.cursor()
+
+        # La requête SQL à exécuter
+        sql_query = f"INSERT INTO `event` (`date`, `evenement`, `message`, `idportier`) VALUES ('{new_date}', '{evenement}', '{message}', '1')"
+
+        # Exécuter la requête SQL
+        cursor.execute(sql_query)
+
+        # Valider la transaction
+        conn.commit()
+
+        print("Requête SQL exécutée avec succès!")
+
+    except MySQLdb.Error as err:
+        print(f"Erreur MySQL : {err}")
+
+    finally:
+        # Fermer le curseur et la connexion
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+# Boucle principale
+try:
+    while True:
+        client.loop()
+        sleep(0.1)
+        if button_14.is_pressed:
+            on_button_press()
+except KeyboardInterrupt:
+    print("Programme interrompu. Arrêt des threads.")
+    client.disconnect()
+    print("Programme terminé.")
